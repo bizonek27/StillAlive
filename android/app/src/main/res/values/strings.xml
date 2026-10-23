@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">StillAlive</string>
+    <string name="channel_checkin_id" translatable="false">checkin</string>
+    <string name="channel_checkin_name">Daily check-in</string>
+    <string name="channel_checkin_description">Reminders to confirm that you are okay</string>
+
+    <!-- Notification -->
+    <string name="notification_title">Are you okay?</string>
+    <string name="notification_text">Tap \"I\'m OK\" to let your loved ones know everything is fine.</string>
+    <string name="notification_action_confirm">I\'m OK</string>
+    <string name="notification_confirmed">Thank you! Confirmation saved.</string>
+
+    <!-- Login -->
+    <string name="login_title">Welcome to StillAlive</string>
+    <string name="login_subtitle">We will regularly ask if you are okay. If you do not answer, we will text you, and then notify your family and a person from work.</string>
+    <string name="login_phone_label">Your phone number</string>
+    <string name="login_phone_hint">E.g. 600 123 456 (other countries: +44 …)</string>
+    <string name="login_send_code">Send SMS code</string>
+    <string name="login_code_label">Code from SMS</string>
+    <string name="login_verify">Sign in</string>
+    <string name="login_error">Could not sign in. Check the number or the code and try again.</string>
+    <string name="login_timeout">No response from the sign-in server. Make sure the phone has Google Play services and internet access, then try again.</string>
+    <string name="login_change_number">Change number</string>
+
+    <!-- Home -->
+    <string name="home_greeting">Hello, %1$s</string>
+    <string name="home_confirm_button">I\'M OK</string>
+    <string name="home_status_ok">Everything is confirmed</string>
+    <string name="home_status_pending">Please confirm you are okay</string>
+    <string name="home_status_escalated">Your contacts have been notified. Confirm to let them know you are okay.</string>
+    <string name="home_last_confirmed">Last confirmed: %1$s</string>
+    <string name="home_never_confirmed">Not confirmed yet</string>
+    <string name="home_next_checkin">Next check-in: %1$s</string>
+    <string name="home_no_contacts">You have no emergency contacts. Add at least one in settings.</string>
+    <string name="home_notifications_off">Notifications are disabled. We can only reach you by phone call.</string>
+    <string name="home_enable_notifications">Enable notifications</string>
+    <string name="confirmed_toast">Thank you! See you tomorrow.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_welcome">Tell us about yourself</string>
+    <string name="settings_name">Your name</string>
+    <string name="settings_address">Home address</string>
+    <string name="settings_address_hint">Given to your contacts and the police if you stop responding</string>
+    <string name="settings_checkin_time">Daily question at</string>
+    <string name="settings_quiet_hours">Night silence (no repeated reminders)</string>
+    <string name="settings_quiet_from">From</string>
+    <string name="settings_quiet_to">To</string>
+    <string name="settings_contacts">Emergency contacts</string>
+    <string name="settings_contacts_hint">Up to 2 family contacts and 1 person from work. They will get an SMS if you stop answering.</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_saved">Saved</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_delete_account">Delete account</string>
+    <string name="settings_delete_confirm_title">Delete account?</string>
+    <string name="settings_delete_confirm_text">All your data will be deleted and nobody will be notified anymore.</string>
+
+    <!-- Contacts -->
+    <string name="contact_name">Name</string>
+    <string name="contact_phone">Phone number</string>
+    <string name="contact_kind_family">Family / friend</string>
+    <string name="contact_kind_police">Police station</string>
+    <string name="contact_invalid_phone">Enter a valid phone number, e.g. 600 123 456 or +48 600 123 456</string>
+    <string name="contact_delete">Remove contact</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="back">Back</string>
+    <string name="error_contact_limit">You have added too many new contacts today. Please try again tomorrow.</string>
+    <string name="error_generic">Something went wrong. Check your internet connection and try again.</string>
+
+    <!-- Profile: address, schedule, escalation -->
+    <string name="address_street">Street</string>
+    <string name="address_building">Building no.</string>
+    <string name="address_apartment">Apartment (optional)</string>
+    <string name="address_postal_code">Postal code</string>
+    <string name="address_city">City / town</string>
+    <string name="address_notes">Tips for whoever comes (optional)</string>
+    <string name="address_notes_hint">Floor, intercom code, who has a spare key</string>
+    <string name="field_required">Required</string>
+    <string name="settings_fill_required">Fill in the required fields above.</string>
+    <string name="settings_schedule">When to ask</string>
+    <string name="settings_escalation">If you do not respond</string>
+    <string name="settings_escalate_after">Delay before the SMS and the alarm</string>
+    <string name="hours_value">%1$d h</string>
+    <string name="settings_escalation_summary">If you do not answer, we will remind you %1$d times every %2$s. %3$s after the last reminder we will text you, and after another %3$s we will notify your family and work contact.</string>
+    <string name="settings_add_family">Add family contact</string>
+    <string name="contact_edit">Edit contact</string>
+    <string name="settings_add_work">Add a work contact</string>
+    <string name="contact_kind_work">Work</string>
+    <string name="contact_work_hint">They will be told you may need help, with the names and numbers of your family contacts.</string>
+    <string name="contact_duplicate_phone">This number is already on your contact list.</string>
+    <string name="duration_hours">Hours</string>
+    <string name="duration_minutes">Minutes</string>
+    <string name="minutes_value">%1$d min</string>
+    <string name="settings_reminder_interval">Remind me every</string>
+    <string name="settings_quiet_note">No reminders during night silence, and that time does not count towards the delays below. After your contacts are notified, night silence no longer applies.</string>
+</resources>

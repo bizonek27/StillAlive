@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_checkin_name">Codzienne potwierdzenie</string>
+    <string name="channel_checkin_description">Przypomnienia o potwierdzeniu, że wszystko w porządku</string>
+
+    <string name="notification_title">Czy wszystko w porządku?</string>
+    <string name="notification_text">Naciśnij „Jestem OK”, aby bliscy wiedzieli, że wszystko dobrze.</string>
+    <string name="notification_action_confirm">Jestem OK</string>
+    <string name="notification_confirmed">Dziękujemy! Potwierdzenie zapisane.</string>
+
+    <string name="login_title">Witaj w StillAlive</string>
+    <string name="login_subtitle">Będziemy regularnie pytać, czy wszystko u Ciebie w porządku. Jeśli nie odpowiesz, wyślemy Ci SMS, a potem powiadomimy Twoich bliskich i osobę z pracy.</string>
+    <string name="login_phone_label">Twój numer telefonu</string>
+    <string name="login_phone_hint">Np. 600 123 456 (inne kraje: +44 …)</string>
+    <string name="login_send_code">Wyślij kod SMS</string>
+    <string name="login_code_label">Kod z SMS-a</string>
+    <string name="login_verify">Zaloguj</string>
+    <string name="login_error">Nie udało się zalogować. Sprawdź numer lub kod i spróbuj ponownie.</string>
+    <string name="login_timeout">Brak odpowiedzi serwera logowania. Sprawdź, czy telefon ma usługi Google Play i dostęp do internetu, i spróbuj ponownie.</string>
+    <string name="login_change_number">Zmień numer</string>
+
+    <string name="home_greeting">Dzień dobry, %1$s</string>
+    <string name="home_confirm_button">JESTEM OK</string>
+    <string name="home_status_ok">Wszystko potwierdzone</string>
+    <string name="home_status_pending">Potwierdź, że wszystko w porządku</string>
+    <string name="home_status_escalated">Twoi bliscy zostali powiadomieni. Potwierdź, aby wiedzieli, że wszystko dobrze.</string>
+    <string name="home_last_confirmed">Ostatnie potwierdzenie: %1$s</string>
+    <string name="home_never_confirmed">Jeszcze nie potwierdzono</string>
+    <string name="home_next_checkin">Następne pytanie: %1$s</string>
+    <string name="home_no_contacts">Nie masz kontaktów alarmowych. Dodaj przynajmniej jeden w ustawieniach.</string>
+    <string name="home_notifications_off">Powiadomienia są wyłączone. Możemy skontaktować się z Tobą tylko telefonicznie.</string>
+    <string name="home_enable_notifications">Włącz powiadomienia</string>
+    <string name="confirmed_toast">Dziękujemy! Do jutra.</string>
+
+    <string name="settings_title">Ustawienia</string>
+    <string name="settings_welcome">Opowiedz nam o sobie</string>
+    <string name="settings_name">Imię i nazwisko</string>
+    <string name="settings_address">Adres zamieszkania</string>
+    <string name="settings_address_hint">Przekażemy go bliskim i policji, jeśli przestaniesz odpowiadać</string>
+    <string name="settings_checkin_time">Codzienne pytanie o godzinie</string>
+    <string name="settings_quiet_hours">Cisza nocna (bez ponownych przypomnień)</string>
+    <string name="settings_quiet_from">Od</string>
+    <string name="settings_quiet_to">Do</string>
+    <string name="settings_contacts">Kontakty alarmowe</string>
+    <string name="settings_contacts_hint">Do 2 kontaktów rodzinnych i 1 osoba z pracy. Dostaną SMS, jeśli przestaniesz odpowiadać.</string>
+    <string name="settings_save">Zapisz</string>
+    <string name="settings_saved">Zapisano</string>
+    <string name="settings_sign_out">Wyloguj</string>
+    <string name="settings_delete_account">Usuń konto</string>
+    <string name="settings_delete_confirm_title">Usunąć konto?</string>
+    <string name="settings_delete_confirm_text">Wszystkie Twoje dane zostaną usunięte i nikt nie będzie już powiadamiany.</string>
+
+    <string name="contact_name">Imię</string>
+    <string name="contact_phone">Numer telefonu</string>
+    <string name="contact_kind_family">Rodzina / znajomy</string>
+    <string name="contact_kind_police">Komisariat policji</string>
+    <string name="contact_invalid_phone">Podaj poprawny numer telefonu, np. 600 123 456</string>
+    <string name="contact_delete">Usuń kontakt</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Anuluj</string>
+    <string name="delete">Usuń</string>
+    <string name="back">Wstecz</string>
+    <string name="error_contact_limit">Dodano dziś zbyt wiele nowych kontaktów. Spróbuj ponownie jutro.</string>
+    <string name="error_generic">Coś poszło nie tak. Sprawdź połączenie z internetem i spróbuj ponownie.</string>
+
+    <string name="address_street">Ulica</string>
+    <string name="address_building">Nr domu</string>
+    <string name="address_apartment">Nr mieszkania (opcjonalnie)</string>
+    <string name="address_postal_code">Kod pocztowy</string>
+    <string name="address_city">Miejscowość</string>
+    <string name="address_notes">Wskazówki dla osoby, która przyjdzie (opcjonalnie)</string>
+    <string name="address_notes_hint">Piętro, kod domofonu, kto ma zapasowy klucz</string>
+    <string name="field_required">Wymagane</string>
+    <string name="settings_fill_required">Uzupełnij wymagane pola powyżej.</string>
+    <string name="settings_schedule">Kiedy pytać</string>
+    <string name="settings_escalation">Jeśli nie odpowiesz</string>
+    <string name="settings_escalate_after">Odstęp przed SMS-em i alarmem</string>
+    <string name="hours_value">%1$d godz.</string>
+    <string name="settings_escalation_summary">Jeśli nie odpowiesz, przypomnimy %1$d razy co %2$s. %3$s po ostatnim przypomnieniu wyślemy Ci SMS, a po kolejnych %3$s powiadomimy bliskich i kontakt z pracy.</string>
+    <string name="settings_add_family">Dodaj kontakt rodzinny</string>
+    <string name="contact_edit">Edytuj kontakt</string>
+    <string name="settings_add_work">Dodaj kontakt z pracy</string>
+    <string name="contact_kind_work">Praca</string>
+    <string name="contact_work_hint">Dostanie informację, że możesz potrzebować pomocy, razem z imionami i numerami Twoich bliskich.</string>
+    <string name="contact_duplicate_phone">Ten numer jest już na liście kontaktów.</string>
+    <string name="duration_hours">Godziny</string>
+    <string name="duration_minutes">Minuty</string>
+    <string name="minutes_value">%1$d min</string>
+    <string name="settings_reminder_interval">Przypominaj co</string>
+    <string name="settings_quiet_note">W czasie ciszy nocnej nie przypominamy, a ten czas nie wlicza się do odstępów poniżej. Po powiadomieniu bliskich cisza nocna przestaje obowiązywać.</string>
+</resources>

@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// All writes go through Cloud Functions (Admin SDK bypasses these rules),
+// so clients can only read their own data.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+
+      match /events/{eventId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

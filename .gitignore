@@ -1,0 +1,24 @@
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/app/google-services.json
+*.iml
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Functions
+functions/node_modules/
+functions/lib/
+functions/.env*
+functions/.secret.local
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
