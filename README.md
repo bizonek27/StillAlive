@@ -1,7 +1,7 @@
 # StillAlive
 
 Aplikacja pożytku publicznego dla osób mieszkających samotnie. Codziennie pyta użytkownika, czy wszystko
-w porządku. Jeśli nie odpowie — przypomina, dzwoni, a w końcu powiadamia bliskich i policję.
+w porządku. Jeśli nie odpowie — przypomina, dzwoni, a w końcu powiadamia bliskich, prace (o ile ustawione) i policję (w przyszlosci).
 
 ## Jak to działa
 
