@@ -23,6 +23,13 @@ initializeApp();
 const db = getFirestore(DATABASE_ID);
 
 const ESCALATION_RETRY = 15 * MINUTE;
+/** The scheduler runs every 5 minutes; handle anything due before roughly the next run. */
+const TICK_LOOKAHEAD = 2 * MINUTE;
+/**
+ * Whether a new contact number (also an edited one) gets an SMS saying it was added as an emergency contact.
+ * Off for now at the owner's request; consider turning it back on before release (consent / GDPR).
+ */
+const NOTIFY_NEW_CONTACTS = true;
 
 /**
  * When enforced, callables only accept requests from the genuine app (Play Integrity, or a registered
@@ -337,7 +344,8 @@ async function processUser(ref: DocumentReference, now: number): Promise<void> {
 export const tick = onSchedule(
   { schedule: "every 5 minutes", timeZone: "Etc/UTC", secrets: TELEPHONY_SECRETS, timeoutSeconds: 300 },
   async () => {
-    const now = Date.now();
+    // Steps due a few milliseconds after this run would otherwise wait for the next one, 5 minutes later.
+    const now = Date.now() + TICK_LOOKAHEAD;
     const due = await db.collection("users")
       .where("nextActionAt", "<=", Timestamp.fromMillis(now))
       .orderBy("nextActionAt")
@@ -402,7 +410,7 @@ export const saveProfile = onCall({ ...CALLABLE_OPTIONS, secrets: TELEPHONY_SECR
   });
 
   // Let new contacts know why they may hear from us (best effort).
-  if (newNotifiedContacts.length > 0) {
+  if (NOTIFY_NEW_CONTACTS && newNotifiedContacts.length > 0) {
     const tel = telephony();
     const body = t(input.language, "contactAddedSms", { name: input.displayName, phone: displayPhone(phone) });
     const results = await Promise.allSettled(newNotifiedContacts.map((c) => tel.sms(c.phone, body)));

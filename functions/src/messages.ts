@@ -6,17 +6,18 @@ const MESSAGES = {
       "Dzień dobry {name}. Tu aplikacja StillAlive. Nie potwierdziłeś, że wszystko u Ciebie w porządku. " +
       "Jeśli wszystko jest dobrze, naciśnij jeden albo otwórz aplikację StillAlive.",
     nudgeSms:
-      "{prefix} Nie odpowiadasz na pytania. Otwórz aplikację i naciśnij Jestem OK. Za {escalateIn} powiadomimy bliskich.",
+      "{prefix} Nie odpowiadasz na powiadomienia. Otwórz aplikację i naciśnij Jestem OK. Za {escalateIn} powiadomimy bliskich.",
     workSms:
-      "{prefix} {name} nie odpowiada od {duration}, może potrzebować pomocy. Prosimy o kontakt z rodziną: {family}.",
+      "{prefix} {name} ({phone}) nie odpowiada od {duration}. Prosimy o kontakt z rodziną: {family}.",
     workSmsNoFamily:
-      "{prefix} {name} nie odpowiada od {duration}, może potrzebować pomocy. Prosimy o kontakt z tą osobą: {phone}.",
+      "{prefix} {name} ({phone}) nie odpowiada od {duration}. Prosimy o kontakt z rodziną: {family}.",
     workVoice:
       "Dzień dobry. To automatyczny komunikat aplikacji StillAlive. {name} nie daje znaku życia od {duration} " +
-      "i może potrzebować pomocy. Szczegóły i kontakt do rodziny wysłaliśmy SMS-em.",
+      ". Szczegóły i kontakt do rodziny wysłaliśmy SMS-em.",
     familySms:
-      "{prefix} {name} nie odpowiada od {duration}.{police} Prosimy pilnie sprawdzić, czy wszystko w porządku.",
-    familySmsPolice: " Za {policeIn} poinformujemy Policję.",
+      "{prefix} {name} nie odpowiada od {duration}. Prosimy pilnie sprawdzić, czy wszystko w porządku. " +
+      "Adres: {address}.",
+    familySmsPolice: " Za {policeIn} poinformujemy Policję {police}.",
     familyVoice:
       "Dzień dobry. To automatyczny komunikat aplikacji StillAlive. {name} nie potwierdza, " +
       "że wszystko w porządku, od {duration}. Szczegóły wysłaliśmy SMS-em. " +
@@ -51,7 +52,8 @@ const MESSAGES = {
       "Hello. This is an automated message from the StillAlive app. {name} has not been in touch for {duration} " +
       "and may need help. We have sent you the details and their family's contact by text message.",
     familySms:
-      "{prefix} {name} has not answered for {duration}.{police} Please check urgently that they are okay.",
+      "{prefix} {name} has not answered for {duration}.{police} Please check urgently that they are okay. " +
+      "Address: {address}.",
     familySmsPolice: " We will inform the police in {policeIn}.",
     familyVoice:
       "Hello. This is an automated message from the StillAlive app. {name} has not confirmed " +

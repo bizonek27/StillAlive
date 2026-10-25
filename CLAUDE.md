@@ -29,7 +29,8 @@ potem                                    cisza aż do „Jestem OK”; wtedy SMS
 - E = `escalateAfterMinutes` (5 min–48 godz., co 5 min). Przed alarmem cisza nocna nie wlicza się do E.
 - Policja: etap istnieje w backendzie (`notifyPolice`), ale w aplikacji jest ukryta „na razie”.
 - Połączenia VMS (SMSAPI) są dodatkiem: konto nie ma jeszcze uprawnienia VMS (błąd 110), SMS zawsze idzie pierwszy.
-- SMS-y zaczynają się od „App StillAlive:”, są bez polskich znaków (`normalize`) i tymczasowo ≤160 znaków.
+- SMS-y zaczynają się od „App StillAlive:” i są bez polskich znaków (`normalize`). Wszystkie mieszczą się w 160 znakach
+  oprócz SMS-a do rodziny, który celowo zawiera pełny adres z uwagami (2–3 części).
 
 Logika jest czysta i testowana w `functions/src/schedule.ts` (`decide()`); efekty uboczne w `functions/src/index.ts`.
 
@@ -54,6 +55,8 @@ Nie buduj aplikacji, gdy właściciel zapowiada kolejne zmiany. Nie wdrażaj i n
 ## Przełączniki do zmiany przed publikacją
 
 - `ALLOW_DUPLICATE_CONTACT_PHONES = true` — w `functions/src/validation.ts` i `Models.kt` (ułatwia testy jednym numerem).
+- `NOTIFY_NEW_CONTACTS = false` w `functions/src/index.ts` — SMS „dodano Cię jako kontakt” wyłączony na prośbę właściciela;
+  przed publikacją rozważyć ponowne włączenie (zgoda kontaktów, RODO).
 - `ENFORCE_APP_CHECK = false` w `functions/src/index.ts` — włączyć po rejestracji aplikacji w App Check
   (Play Integrity + token debug w konsoli Firebase).
 - Publikacja w Google Play: targetSdk 36 (wymaga aktualizacji AGP/bibliotek), podpis release, polityka prywatności,
