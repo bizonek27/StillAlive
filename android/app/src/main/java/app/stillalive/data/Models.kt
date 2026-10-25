@@ -45,7 +45,7 @@ data class ProfileInput(
     val reminderIntervalMinutes: Int,
     val quietStartHour: Int,
     val quietEndHour: Int,
-    /** Delay after the 3rd reminder before the SMS to the person, and again before the alarm. */
+    /** Delay between stages: 3rd reminder → SMS to the person → family → work. */
     val escalateAfterMinutes: Int,
     /** Hours after the family is notified. */
     val policeAfterHours: Int,

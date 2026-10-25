@@ -25,7 +25,8 @@ const MIN_GAP = MINUTE;
 
 export type CheckState = "ok" | "pending" | "escalated";
 /** nudgeUser: SMS (and a call, if voice works) to the person who is not answering. */
-export type Action = "push" | "nudgeUser" | "escalate" | "notifyPolice";
+/** escalate alerts the family; notifyWork follows one delay later. */
+export type Action = "push" | "nudgeUser" | "escalate" | "notifyWork" | "notifyPolice";
 
 export interface ScheduleSettings {
   /** Time of the daily question. */
@@ -40,7 +41,7 @@ export interface ScheduleSettings {
    */
   quietStartHour: number;
   quietEndHour: number;
-  /** Delay after the last reminder before the SMS to the person, and again before the alarm. */
+  /** Delay between the stages: last reminder → SMS to the person → family → work. */
   escalateAfterMinutes: number;
   /** Notify the police contact this long after the family (currently not offered in the app). */
   policeAfterHours: number;
@@ -56,6 +57,7 @@ export interface Tracking {
   remindersSent: number;
   nudgedAt: number | null;
   escalatedAt: number | null;
+  workNotifiedAt: number | null;
   policeNotifiedAt: number | null;
 }
 
@@ -135,9 +137,10 @@ export function afterCountedTime(from: number, duration: number, s: ScheduleSett
  *   T                         push: the daily question (even in quiet hours)
  *   T+R, T+2R, T+3R           3 reminder pushes, skipping quiet hours (resumed when they end)
  *   3rd reminder + E          nudgeUser: SMS to the person
- *   SMS + E                   escalate: family and work contacts
- *   alarm .. +3h              a push every 30 min, ignoring all settings; then silence until confirmed
- *   alarm + P                 notifyPolice (wall-clock)
+ *   SMS + E                   escalate: family contacts
+ *   family + E                notifyWork: work contact (wall-clock: quiet hours no longer apply)
+ *   family .. +3h             a push every 30 min, ignoring all settings; then silence until confirmed
+ *   family + P                notifyPolice (wall-clock)
  */
 export function decide(current: Tracking, s: ScheduleSettings, now: number): Decision {
   let t = { ...current };
@@ -148,7 +151,7 @@ export function decide(current: Tracking, s: ScheduleSettings, now: number): Dec
     }
     t = {
       ...t, state: "pending", pendingSince: t.nextDueAt, lastReminderAt: null, remindersSent: 0,
-      nudgedAt: null, escalatedAt: null, policeNotifiedAt: null,
+      nudgedAt: null, escalatedAt: null, workNotifiedAt: null, policeNotifiedAt: null,
     };
   }
   t.pendingSince ??= now;
@@ -163,8 +166,13 @@ export function decide(current: Tracking, s: ScheduleSettings, now: number): Dec
     actions.push("escalate");
     t.escalatedAt = now;
     t.state = "escalated";
-  } else if (t.escalatedAt !== null && t.policeNotifiedAt === null &&
-      now - t.escalatedAt >= s.policeAfterHours * HOUR) {
+  }
+  // After the family alarm quiet hours no longer apply, so these use wall-clock time.
+  if (t.escalatedAt !== null && t.workNotifiedAt === null && now - t.escalatedAt >= delay) {
+    actions.push("notifyWork");
+    t.workNotifiedAt = now;
+  }
+  if (t.escalatedAt !== null && t.policeNotifiedAt === null && now - t.escalatedAt >= s.policeAfterHours * HOUR) {
     actions.push("notifyPolice");
     t.policeNotifiedAt = now;
   }
@@ -192,7 +200,9 @@ export function decide(current: Tracking, s: ScheduleSettings, now: number): Dec
     candidates.push(afterCountedTime(t.lastReminderAt!, delay, s));
   } else if (t.nudgedAt !== null && t.escalatedAt === null) {
     candidates.push(afterCountedTime(t.nudgedAt, delay, s));
-  } else if (t.escalatedAt !== null && t.policeNotifiedAt === null) {
+  }
+  if (t.escalatedAt !== null && t.workNotifiedAt === null) candidates.push(t.escalatedAt + delay);
+  if (t.escalatedAt !== null && t.policeNotifiedAt === null) {
     candidates.push(t.escalatedAt + s.policeAfterHours * HOUR);
   }
 

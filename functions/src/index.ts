@@ -70,6 +70,7 @@ function trackingOf(d: DocumentData): Tracking {
     remindersSent: d.remindersSent ?? 0,
     nudgedAt: toMillis(d.nudgedAt),
     escalatedAt: toMillis(d.escalatedAt),
+    workNotifiedAt: toMillis(d.workNotifiedAt),
     policeNotifiedAt: toMillis(d.policeNotifiedAt),
   };
 }
@@ -78,7 +79,7 @@ function trackingOf(d: DocumentData): Tracking {
 function okTracking(nextDueAt: number): Tracking {
   return {
     state: "ok", nextDueAt, pendingSince: null, lastReminderAt: null, remindersSent: 0, nudgedAt: null,
-    escalatedAt: null, policeNotifiedAt: null,
+    escalatedAt: null, workNotifiedAt: null, policeNotifiedAt: null,
   };
 }
 
@@ -91,6 +92,7 @@ function trackingFields(tr: Tracking): DocumentData {
     remindersSent: tr.remindersSent,
     nudgedAt: toTimestamp(tr.nudgedAt),
     escalatedAt: toTimestamp(tr.escalatedAt),
+    workNotifiedAt: toTimestamp(tr.workNotifiedAt),
     policeNotifiedAt: toTimestamp(tr.policeNotifiedAt),
   };
 }
@@ -221,52 +223,57 @@ function contactsOf(data: DocumentData, kind: Contact["kind"]): Contact[] {
   return ((data.contacts ?? []) as Contact[]).filter((c) => c.kind === kind);
 }
 
-/** Alarm: SMS (and a call, if voice works) to family and work contacts. */
-async function escalate(ref: DocumentReference, data: DocumentData, tracking: Tracking, now: number): Promise<void> {
-  const family = contactsOf(data, "family");
-  const work = contactsOf(data, "work");
-  if (family.length + work.length === 0) {
-    logger.warn("escalation without contacts", { uid: ref.id });
-    await logEvent(ref, "escalation_no_contacts");
+/**
+ * Alarm stage for one kind of contact: SMS (and a call, if voice works) to each of them.
+ * Family comes first; work follows one delay later (see decide()).
+ */
+async function alertContacts(
+  ref: DocumentReference, data: DocumentData, tracking: Tracking, now: number, kind: "family" | "work",
+): Promise<void> {
+  const contacts = contactsOf(data, kind);
+  if (contacts.length === 0) {
+    await logEvent(ref, `${kind}_no_contacts`);
     return;
   }
 
   const lang: Lang = asLang(data.language);
   const settings = settingsOf(data);
-  const police = contactsOf(data, "police").length > 0
-    ? t(lang, "familySmsPolice", { policeIn: formatDuration(lang, settings.policeAfterHours * HOUR) })
-    : "";
+  const family = contactsOf(data, "family");
   const params = {
     ...alertParams(data, tracking, now, lang),
-    police,
+    police: contactsOf(data, "police").length > 0
+      ? t(lang, "familySmsPolice", { policeIn: formatDuration(lang, settings.policeAfterHours * HOUR) })
+      : "",
     family: family.map((c) => `${c.name} ${displayPhone(c.phone)}`).join(", "),
   };
-  const workSms = family.length > 0 ? "workSms" : "workSmsNoFamily";
-  const all = [
-    ...family.map((contact) => ({ contact, sms: t(lang, "familySms", params), voice: t(lang, "familyVoice", params) })),
-    ...work.map((contact) => ({ contact, sms: t(lang, workSms, params), voice: t(lang, "workVoice", params) })),
-  ];
-  // Contacts sharing a number get each distinct message once (family and work texts differ).
-  const recipients = all.filter((r, i) => all.findIndex((o) => o.contact.phone === r.contact.phone && o.sms === r.sms) === i);
+  const sms = kind === "family"
+    ? t(lang, "familySms", params)
+    : t(lang, family.length > 0 ? "workSms" : "workSmsNoFamily", params);
+  const voice = t(lang, kind === "family" ? "familyVoice" : "workVoice", params);
+  // Several contacts may share a number (useful when testing): one message per number.
+  const phones = [...new Set(contacts.map((c) => c.phone))];
 
   const tel = telephony();
-  const results = await Promise.allSettled(recipients.map(async ({ contact, sms, voice }) => {
+  const results = await Promise.allSettled(phones.map(async (phone) => {
     // The SMS carries the details, so once it is sent the contact counts as notified;
-    // a failed follow-up call must not make the whole escalation retry and resend the SMS.
-    await tel.sms(contact.phone, sms);
+    // a failed follow-up call must not make the stage retry and resend the SMS.
+    await tel.sms(phone, sms);
     try {
-      await tel.call(contact.phone, messageCallText(voice));
+      await tel.call(phone, messageCallText(voice));
     } catch (e) {
-      logger.warn("escalation call failed", { uid: ref.id, kind: contact.kind, ...describeError(e) });
+      logger.warn("alarm call failed", { uid: ref.id, kind, ...describeError(e) });
     }
-    return contact.phone;
+    return phone;
   }));
 
-  logRejected("escalation contact failed", results);
+  logRejected(`${kind} alarm failed`, results);
   const notified = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
-  await ref.update({ escalationNotified: notified });
-  await logEvent(ref, "escalation", { notified: notified.length, failed: recipients.length - notified.length });
-  if (notified.length === 0) throw new Error("all escalation notifications failed");
+  // Everyone notified gets the all-clear SMS later.
+  if (notified.length > 0) await ref.update({ escalationNotified: FieldValue.arrayUnion(...notified) });
+  await logEvent(ref, kind === "family" ? "escalation" : "work_notified", {
+    notified: notified.length, failed: phones.length - notified.length,
+  });
+  if (notified.length === 0) throw new Error(`all ${kind} notifications failed`);
 }
 
 /** Second alarm, policeAfterHours after the family: voice call to the police contact. */
@@ -295,7 +302,8 @@ async function runAction(
   switch (action) {
     case "push": return sendPush(ref, data);
     case "nudgeUser": return nudgeUser(ref, data, tracking);
-    case "escalate": return escalate(ref, data, tracking, now);
+    case "escalate": return alertContacts(ref, data, tracking, now, "family");
+    case "notifyWork": return alertContacts(ref, data, tracking, now, "work");
     case "notifyPolice": return notifyPolice(ref, data, tracking, now);
   }
 }
@@ -327,6 +335,8 @@ async function processUser(ref: DocumentReference, now: number): Promise<void> {
           escalatedAt: null,
           nextActionAt: toTimestamp(now + ESCALATION_RETRY),
         });
+      } else if (action === "notifyWork") {
+        await ref.update({ workNotifiedAt: null, nextActionAt: toTimestamp(now + ESCALATION_RETRY) });
       } else if (action === "notifyPolice") {
         // E.g. voice calls are only possible 8:00–22:00: retry until it goes through.
         await ref.update({ policeNotifiedAt: null, nextActionAt: toTimestamp(now + ESCALATION_RETRY) });

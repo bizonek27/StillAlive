@@ -75,9 +75,9 @@
     <string name="settings_fill_required">Uzupełnij wymagane pola powyżej.</string>
     <string name="settings_schedule">Kiedy pytać</string>
     <string name="settings_escalation">Jeśli nie odpowiesz</string>
-    <string name="settings_escalate_after">Odstęp przed SMS-em i alarmem</string>
+    <string name="settings_escalate_after">Odstęp między SMS-ami: do Ciebie, do bliskich, do pracy</string>
     <string name="hours_value">%1$d godz.</string>
-    <string name="settings_escalation_summary">Jeśli nie odpowiesz, przypomnimy %1$d razy co %2$s. %3$s po ostatnim przypomnieniu wyślemy Ci SMS, a po kolejnych %3$s powiadomimy bliskich i kontakt z pracy.</string>
+    <string name="settings_escalation_summary">Jeśli nie odpowiesz, przypomnimy %1$d razy co %2$s. %3$s po ostatnim przypomnieniu wyślemy Ci SMS, po kolejnych %3$s powiadomimy bliskich, a po następnych %3$s kontakt z pracy.</string>
     <string name="settings_add_family">Dodaj kontakt rodzinny</string>
     <string name="contact_edit">Edytuj kontakt</string>
     <string name="settings_add_work">Dodaj kontakt z pracy</string>

@@ -10,10 +10,10 @@ const MESSAGES = {
     workSms:
       "{prefix} {name} ({phone}) nie odpowiada od {duration}. Prosimy o kontakt z rodziną: {family}.",
     workSmsNoFamily:
-      "{prefix} {name} ({phone}) nie odpowiada od {duration}. Prosimy o kontakt z rodziną: {family}.",
+      "{prefix} {name} ({phone}) nie odpowiada od {duration}. Prosimy o kontakt z rodziną.",
     workVoice:
-      "Dzień dobry. To automatyczny komunikat aplikacji StillAlive. {name} nie daje znaku życia od {duration} " +
-      ". Szczegóły i kontakt do rodziny wysłaliśmy SMS-em.",
+      "Dzień dobry. To automatyczny komunikat aplikacji StillAlive. {name} nie daje znaku życia od {duration}. " +
+      "Szczegóły i kontakt do rodziny wysłaliśmy SMS-em.",
     familySms:
       "{prefix} {name} nie odpowiada od {duration}. Prosimy pilnie sprawdzić, czy wszystko w porządku. " +
       "Adres: {address}.",

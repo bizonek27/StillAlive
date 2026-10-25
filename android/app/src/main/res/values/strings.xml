@@ -84,9 +84,9 @@
     <string name="settings_fill_required">Fill in the required fields above.</string>
     <string name="settings_schedule">When to ask</string>
     <string name="settings_escalation">If you do not respond</string>
-    <string name="settings_escalate_after">Delay before the SMS and the alarm</string>
+    <string name="settings_escalate_after">Delay between texts: to you, to family, to work</string>
     <string name="hours_value">%1$d h</string>
-    <string name="settings_escalation_summary">If you do not answer, we will remind you %1$d times every %2$s. %3$s after the last reminder we will text you, and after another %3$s we will notify your family and work contact.</string>
+    <string name="settings_escalation_summary">If you do not answer, we will remind you %1$d times every %2$s. %3$s after the last reminder we will text you, after another %3$s we will notify your family, and after another %3$s your work contact.</string>
     <string name="settings_add_family">Add family contact</string>
     <string name="contact_edit">Edit contact</string>
     <string name="settings_add_work">Add a work contact</string>

@@ -18,7 +18,7 @@ const hhmm = (ms: number) => DateTime.fromMillis(ms, { zone: TZ }).toFormat("HH:
 
 const okUntil = (due: number): Tracking => ({
   state: "ok", nextDueAt: due, pendingSince: null, lastReminderAt: null, remindersSent: 0, nudgedAt: null,
-  escalatedAt: null, policeNotifiedAt: null,
+  escalatedAt: null, workNotifiedAt: null, policeNotifiedAt: null,
 });
 
 /** Simulates the scheduler: runs `decide` every 5 minutes, collecting actions as "HH:mm". */
@@ -80,11 +80,12 @@ describe("decide", () => {
     assert.equal(d.nextActionAt, due);
   });
 
-  it("follows the spec example: 21:00, reminders 23/1/3, SMS 3:15, family 3:30", () => {
+  it("follows the spec example: 21:00, reminders 23/1/3, SMS 3:15, family 3:30, work 3:45", () => {
     const { times, tracking } = simulate(evening, okUntil(due), due, at("2026-03-11T04:00"));
     assert.deepEqual(times("push").slice(0, 4), ["21:00", "23:00", "01:00", "03:00"]);
     assert.deepEqual(times("nudgeUser"), ["03:15"]);
     assert.deepEqual(times("escalate"), ["03:30"]);
+    assert.deepEqual(times("notifyWork"), ["03:45"]);
     assert.equal(tracking.state, "escalated");
   });
 
@@ -117,6 +118,17 @@ describe("decide", () => {
     // 10 minutes counted before midnight, the remaining 5 from 08:00.
     assert.deepEqual(times("nudgeUser"), ["08:05"]);
     assert.deepEqual(times("escalate"), ["08:20"]);
+  });
+
+  it("notifies work one delay after the family, even once quiet hours begin", () => {
+    const s = {
+      ...evening, checkInHour: 17, checkInMinute: 30, reminderIntervalMinutes: 60, quietStartHour: 21, quietEndHour: 6,
+    };
+    const start = at("2026-03-10T17:30");
+    // Question 17:30, reminders 18:30, 19:30, 20:30; SMS 20:45; family 21:00; work 21:15 despite quiet hours.
+    const { times } = simulate(s, okUntil(start), start, at("2026-03-11T08:00"));
+    assert.deepEqual(times("escalate"), ["21:00"]);
+    assert.deepEqual(times("notifyWork"), ["21:15"]);
   });
 
   it("ignores quiet hours after the alarm", () => {

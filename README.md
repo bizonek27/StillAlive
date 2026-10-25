@@ -9,14 +9,15 @@ Użytkownik ustawia:
 
 - **godzinę codziennego pytania** (np. 21:00);
 - **co ile przypominać**, gdy nie odpowie: 30 min, 1, 2, 3 lub 4 godz.;
-- **odstęp E** przed SMS-em do siebie i przed alarmem: w godzinach i minutach, od 5 min do 48 godz., co 5 min;
+- **odstęp E** między kolejnymi SMS-ami (do siebie, do rodziny, do pracy): w godzinach i minutach, od 5 min do 48 godz., co 5 min;
 - **ciszę nocną**: bez przypomnień, a ten czas nie wlicza się do odstępów. Po alarmie nie obowiązuje.
 
 ```
 21:00              codzienne pytanie (push)
 23:00, 1:00, 3:00  3 przypomnienia co R (tu 2 godz.); w ciszy nocnej pomijane, wznawiane po jej końcu
 3:15               SMS do osoby: „Za 15 min powiadomimy bliskich” (3. przypomnienie + E)
-3:30               SMS do rodziny i do kontaktu z pracy (SMS + E)
+3:30               SMS do rodziny z adresem i uwagami (SMS do osoby + E)
+3:45               SMS do kontaktu z pracy, z imionami i numerami rodziny (SMS do rodziny + E)
 3:30–6:30          push co 30 min przez 3 godz. (także w nocy), potem cisza aż do potwierdzenia
 potwierdzenie      SMS „wszystko w porządku” do wszystkich powiadomionych
 ```

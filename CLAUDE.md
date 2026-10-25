@@ -21,12 +21,14 @@ i `values-pl/` (PL) — każdą zmianę tekstu wprowadzaj w obu.
 T (codzienne pytanie, np. 21:00)        push
 T+R, T+2R, T+3R                          3 przypomnienia co R (30 min–4 godz.), w ciszy nocnej pomijane
 3. przypomnienie + E                     SMS do osoby („za E powiadomimy bliskich”)
-SMS + E                                  SMS do rodziny (max 2) i kontaktu z pracy (max 1, dostaje numery rodziny)
-alarm .. +3 godz.                        push co 30 min, niezależnie od ustawień i ciszy nocnej
+SMS do osoby + E                         SMS do rodziny (max 2), z adresem i uwagami
+SMS do rodziny + E                       SMS do kontaktu z pracy (max 1, dostaje imiona i numery rodziny)
+od SMS-a do rodziny .. +3 godz.          push co 30 min, niezależnie od ustawień i ciszy nocnej
 potem                                    cisza aż do „Jestem OK”; wtedy SMS „wszystko w porządku” do powiadomionych
 ```
 
-- E = `escalateAfterMinutes` (5 min–48 godz., co 5 min). Przed alarmem cisza nocna nie wlicza się do E.
+- E = `escalateAfterMinutes` (5 min–48 godz., co 5 min). Do SMS-a do rodziny cisza nocna nie wlicza się do E;
+  potem (praca, push-e po alarmie) liczy się zwykły zegar.
 - Policja: etap istnieje w backendzie (`notifyPolice`), ale w aplikacji jest ukryta „na razie”.
 - Połączenia VMS (SMSAPI) są dodatkiem: konto nie ma jeszcze uprawnienia VMS (błąd 110), SMS zawsze idzie pierwszy.
 - SMS-y zaczynają się od „App StillAlive:” i są bez polskich znaków (`normalize`). Wszystkie mieszczą się w 160 znakach
