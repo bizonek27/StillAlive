@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 import { DateTime } from "luxon";
 import {
-  MINUTE, ScheduleSettings, Tracking,
+  MINUTE, ScheduleSettings, TICK_TOLERANCE, Tracking,
   afterCountedTime, countedTime, decide, isQuietHour, nextDueAfterConfirmation, nextOccurrence,
 } from "../schedule";
 
@@ -18,16 +18,16 @@ const hhmm = (ms: number) => DateTime.fromMillis(ms, { zone: TZ }).toFormat("HH:
 
 const okUntil = (due: number): Tracking => ({
   state: "ok", nextDueAt: due, pendingSince: null, lastReminderAt: null, remindersSent: 0, nudgedAt: null,
-  escalatedAt: null, workNotifiedAt: null, policeNotifiedAt: null,
+  userCalledAt: null, escalatedAt: null, workNotifiedAt: null, policeNotifiedAt: null,
 });
 
-/** Simulates the scheduler: runs `decide` every 5 minutes, collecting actions as "HH:mm". */
+/** Simulates the scheduler like `tick`: runs every 5 minutes, picking up steps due within TICK_TOLERANCE. */
 function simulate(settings: ScheduleSettings, start: Tracking, from: number, to: number) {
   let tracking = start;
   let nextActionAt: number | null = start.nextDueAt;
   const log: { at: number; action: string }[] = [];
   for (let now = from; now <= to; now += 5 * MINUTE) {
-    if (nextActionAt === null || now < nextActionAt) continue;
+    if (nextActionAt === null || nextActionAt > now + TICK_TOLERANCE) continue;
     const d = decide(tracking, settings, now);
     d.actions.forEach((action) => log.push({ at: now, action }));
     tracking = d.tracking;
@@ -74,23 +74,35 @@ describe("quiet hours", () => {
 describe("decide", () => {
   const due = at("2026-03-10T21:00");
 
+  it("acts on steps due a moment after the scheduler run instead of 5 minutes later", () => {
+    const run = due - 300; // the run starts 0.3 s before the question is due
+    assert.deepEqual(decide(okUntil(due), evening, run).actions, ["push"]);
+    // Every later stage was scheduled a few ms after a run; each must still happen on that run.
+    const jitter = 7;
+    const { times } = simulate(evening, okUntil(due + jitter), due, at("2026-03-11T04:00"));
+    assert.deepEqual(times("nudgeUser"), ["03:15"]);
+    assert.deepEqual(times("callUser"), ["03:20"]);
+    assert.deepEqual(times("escalate"), ["03:35"]);
+  });
+
   it("does nothing before the question is due", () => {
-    const d = decide(okUntil(due), evening, due - MINUTE);
+    const d = decide(okUntil(due), evening, due - 3 * MINUTE);
     assert.deepEqual(d.actions, []);
     assert.equal(d.nextActionAt, due);
   });
 
-  it("follows the spec example: 21:00, reminders 23/1/3, SMS 3:15, family 3:30, work 3:45", () => {
+  it("follows the spec example: 21:00, reminders 23/1/3, SMS 3:15, call 3:20, family 3:35, work 3:50", () => {
     const { times, tracking } = simulate(evening, okUntil(due), due, at("2026-03-11T04:00"));
     assert.deepEqual(times("push").slice(0, 4), ["21:00", "23:00", "01:00", "03:00"]);
     assert.deepEqual(times("nudgeUser"), ["03:15"]);
-    assert.deepEqual(times("escalate"), ["03:30"]);
-    assert.deepEqual(times("notifyWork"), ["03:45"]);
+    assert.deepEqual(times("callUser"), ["03:20"]);
+    assert.deepEqual(times("escalate"), ["03:35"]);
+    assert.deepEqual(times("notifyWork"), ["03:50"]);
     assert.equal(tracking.state, "escalated");
   });
 
   it("sends no pushes between the last reminder and the alarm", () => {
-    const { times } = simulate(evening, okUntil(due), due, at("2026-03-11T03:29"));
+    const { times } = simulate(evening, okUntil(due), due, at("2026-03-11T03:34"));
     assert.equal(times("push").length, 4);
   });
 
@@ -98,7 +110,7 @@ describe("decide", () => {
     const { times, nextActionAt } = simulate(
       { ...evening, policeAfterHours: 1 }, okUntil(due), due, at("2026-03-11T12:00"),
     );
-    assert.deepEqual(times("push").slice(4), ["03:30", "04:00", "04:30", "05:00", "05:30", "06:00"]);
+    assert.deepEqual(times("push").slice(4), ["03:35", "04:05", "04:35", "05:05", "05:35", "06:05"]);
     assert.equal(nextActionAt, null);
   });
 
@@ -107,7 +119,8 @@ describe("decide", () => {
     // 01:00 and 03:00 fall in quiet hours 0–8: reminders 23:00, 08:00, 10:00.
     assert.deepEqual(times("push").slice(0, 4), ["21:00", "23:00", "08:00", "10:00"]);
     assert.deepEqual(times("nudgeUser"), ["10:15"]);
-    assert.deepEqual(times("escalate"), ["10:30"]);
+    assert.deepEqual(times("callUser"), ["10:20"]);
+    assert.deepEqual(times("escalate"), ["10:35"]);
   });
 
   it("pauses the SMS delay during quiet hours", () => {
@@ -117,15 +130,16 @@ describe("decide", () => {
     assert.deepEqual(times("push").slice(0, 4), ["22:20", "22:50", "23:20", "23:50"]);
     // 10 minutes counted before midnight, the remaining 5 from 08:00.
     assert.deepEqual(times("nudgeUser"), ["08:05"]);
-    assert.deepEqual(times("escalate"), ["08:20"]);
+    assert.deepEqual(times("callUser"), ["08:10"]);
+    assert.deepEqual(times("escalate"), ["08:25"]);
   });
 
   it("notifies work one delay after the family, even once quiet hours begin", () => {
     const s = {
-      ...evening, checkInHour: 17, checkInMinute: 30, reminderIntervalMinutes: 60, quietStartHour: 21, quietEndHour: 6,
+      ...evening, checkInHour: 17, checkInMinute: 25, reminderIntervalMinutes: 60, quietStartHour: 21, quietEndHour: 6,
     };
-    const start = at("2026-03-10T17:30");
-    // Question 17:30, reminders 18:30, 19:30, 20:30; SMS 20:45; family 21:00; work 21:15 despite quiet hours.
+    const start = at("2026-03-10T17:25");
+    // Question 17:25, reminders 18:25, 19:25, 20:25; SMS 20:40; call 20:45; family 21:00; work 21:15 in quiet hours.
     const { times } = simulate(s, okUntil(start), start, at("2026-03-11T08:00"));
     assert.deepEqual(times("escalate"), ["21:00"]);
     assert.deepEqual(times("notifyWork"), ["21:15"]);
@@ -135,8 +149,8 @@ describe("decide", () => {
     const s = { ...evening, checkInHour: 18, reminderIntervalMinutes: 60, quietStartHour: 23, quietEndHour: 6 };
     const start = at("2026-03-10T18:00");
     const { times } = simulate(s, okUntil(start), start, at("2026-03-11T06:00"));
-    // Question 18:00, reminders 19, 20, 21; SMS 21:15; alarm 21:30; pushes continue into quiet hours.
-    assert.deepEqual(times("escalate"), ["21:30"]);
-    assert.ok(times("push").includes("23:30"));
+    // Question 18:00, reminders 19, 20, 21; SMS 21:15; call 21:20; alarm 21:35; pushes continue into quiet hours.
+    assert.deepEqual(times("escalate"), ["21:35"]);
+    assert.ok(times("push").includes("23:35"));
   });
 });

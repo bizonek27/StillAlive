@@ -28,8 +28,15 @@ export const TELEPHONY_SECRETS = [smsapiToken];
  */
 const NORMALIZE_SMS = true;
 
-/** SMSAPI only offers Polish voices (ewa, jacek, jan, maja). */
-const LECTOR = "ewa";
+/** Polish voices read "StillAlive" letter by letter; this spelling makes them say it the English way. */
+const SPOKEN_APP_NAME = "Stil Alajw";
+
+/** SMSAPI only offers Polish voices. */
+const LECTORS = ["ewa", "jacek", "jan", "maja"];
+export const smsapiLector = defineString("SMSAPI_LECTOR", {
+  default: "ewa",
+  description: `Voice for calls: ${LECTORS.join(", ")}`,
+});
 
 export interface Telephony {
   sms(to: string, body: string): Promise<void>;
@@ -78,8 +85,8 @@ export function telephony(): Telephony {
     async call(to, text, reportId) {
       await post("vms.do", {
         to: toSmsapiNumber(to),
-        tts: text,
-        tts_lector: LECTOR,
+        tts: text.replaceAll("StillAlive", SPOKEN_APP_NAME),
+        tts_lector: LECTORS.includes(smsapiLector.value()) ? smsapiLector.value() : "ewa",
         ...(reportId ? { idx: reportId, notify_url: callbackUrl() } : {}),
       });
     },
@@ -96,15 +103,22 @@ export function newReportId(): string {
   return randomUUID();
 }
 
-/** Call to the user: "press 1 if you are okay", said twice. */
-export function checkInCallText(lang: Lang, name: string): string {
-  const prompt = t(lang, "callPrompt", { name });
-  return `${prompt} ${prompt}`;
+/**
+ * The message, then "I repeat" and the message again. SMSAPI has no pause markup, so sentence ends
+ * and blank lines are what make the text-to-speech voice pause between the two.
+ */
+function repeated(lang: Lang, message: string): string {
+  return `${message}\n\n${t(lang, "callRepeat")}\n\n${message}`;
 }
 
-/** One-way voice message, repeated so the listener catches it. */
-export function messageCallText(message: string): string {
-  return `${message} ${message}`;
+/** Call to the user: "press 1 if you are okay". */
+export function checkInCallText(lang: Lang, name: string): string {
+  return repeated(lang, t(lang, "callPrompt", { name }));
+}
+
+/** One-way voice message for contacts. */
+export function messageCallText(lang: Lang, message: string): string {
+  return repeated(lang, message);
 }
 
 /** "+48123456789" -> "+ 4 8 1 2 3 ..." so text-to-speech reads digits one by one. */

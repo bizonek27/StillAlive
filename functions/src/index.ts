@@ -9,7 +9,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { DateTime } from "luxon";
 import { Lang, asLang, displayPhone, formatDuration, t } from "./messages";
 import {
-  Action, HOUR, MINUTE, ScheduleSettings, Tracking,
+  Action, CALL_AFTER_SMS, HOUR, MINUTE, TICK_TOLERANCE, ScheduleSettings, Tracking,
   afterCountedTime, decide, nextCheckIn, nextDueAfterConfirmation,
 } from "./schedule";
 import {
@@ -24,12 +24,15 @@ const db = getFirestore(DATABASE_ID);
 
 const ESCALATION_RETRY = 15 * MINUTE;
 /** The scheduler runs every 5 minutes; handle anything due before roughly the next run. */
-const TICK_LOOKAHEAD = 2 * MINUTE;
+const TICK_LOOKAHEAD = TICK_TOLERANCE;
 /**
  * Whether a new contact number (also an edited one) gets an SMS saying it was added as an emergency contact.
  * Off for now at the owner's request; consider turning it back on before release (consent / GDPR).
  */
-const NOTIFY_NEW_CONTACTS = true;
+const NOTIFY_NEW_CONTACTS = false;
+
+/** Whether an alarm also phones the contact (VMS) after the SMS. Work gets the SMS only. */
+const CALL_CONTACTS = { family: true, work: false } as const;
 
 /**
  * When enforced, callables only accept requests from the genuine app (Play Integrity, or a registered
@@ -69,6 +72,7 @@ function trackingOf(d: DocumentData): Tracking {
     lastReminderAt: toMillis(d.lastReminderAt),
     remindersSent: d.remindersSent ?? 0,
     nudgedAt: toMillis(d.nudgedAt),
+    userCalledAt: toMillis(d.userCalledAt),
     escalatedAt: toMillis(d.escalatedAt),
     workNotifiedAt: toMillis(d.workNotifiedAt),
     policeNotifiedAt: toMillis(d.policeNotifiedAt),
@@ -78,7 +82,7 @@ function trackingOf(d: DocumentData): Tracking {
 /** Tracking for a confirmed user whose next check-in is at `nextDueAt`. */
 function okTracking(nextDueAt: number): Tracking {
   return {
-    state: "ok", nextDueAt, pendingSince: null, lastReminderAt: null, remindersSent: 0, nudgedAt: null,
+    state: "ok", nextDueAt, pendingSince: null, lastReminderAt: null, remindersSent: 0, nudgedAt: null, userCalledAt: null,
     escalatedAt: null, workNotifiedAt: null, policeNotifiedAt: null,
   };
 }
@@ -91,6 +95,7 @@ function trackingFields(tr: Tracking): DocumentData {
     lastReminderAt: toTimestamp(tr.lastReminderAt),
     remindersSent: tr.remindersSent,
     nudgedAt: toTimestamp(tr.nudgedAt),
+    userCalledAt: toTimestamp(tr.userCalledAt),
     escalatedAt: toTimestamp(tr.escalatedAt),
     workNotifiedAt: toTimestamp(tr.workNotifiedAt),
     policeNotifiedAt: toTimestamp(tr.policeNotifiedAt),
@@ -152,7 +157,7 @@ async function confirmAlive(uid: string, via: "app" | "notification" | "phone"):
   const police: string[] = previous.policeNotified ?? [];
   if (police.length > 0) {
     const lang = asLang(previous.language);
-    const text = messageCallText(t(lang, "policeAllClearVoice", {
+    const text = messageCallText(lang, t(lang, "policeAllClearVoice", {
       name: previous.displayName,
       address: formatAddress(previous.address, t(lang, "addressNotes")) || t(lang, "unknownAddress"),
     }));
@@ -185,23 +190,26 @@ async function sendPush(ref: DocumentReference, data: DocumentData): Promise<voi
 async function nudgeUser(ref: DocumentReference, data: DocumentData, tracking: Tracking): Promise<void> {
   const lang = asLang(data.language);
   const settings = settingsOf(data);
-  const escalateIn = afterCountedTime(tracking.nudgedAt!, settings.escalateAfterMinutes * MINUTE, settings) - tracking.nudgedAt!;
-  const tel = telephony();
-  await tel.sms(data.phone, t(lang, "nudgeSms", { name: data.displayName, escalateIn: formatDuration(lang, escalateIn) }));
+  // The family alarm follows the call (CALL_AFTER_SMS later) by one more delay.
+  const escalateIn = afterCountedTime(
+    tracking.nudgedAt!, CALL_AFTER_SMS + settings.escalateAfterMinutes * MINUTE, settings,
+  ) - tracking.nudgedAt!;
+  await telephony().sms(
+    data.phone, t(lang, "nudgeSms", { name: data.displayName, escalateIn: formatDuration(lang, escalateIn) }),
+  );
   await logEvent(ref, "nudge_user");
+}
 
+/** Phone call to the person: "press 1 if you are okay" (confirmed through smsapiCallback). */
+async function callUser(ref: DocumentReference, data: DocumentData): Promise<void> {
+  const lang = asLang(data.language);
   const reportId = newReportId();
   // Stored before calling so the report can never arrive for an unknown id.
   await db.collection("calls").doc(reportId).set({
     uid: ref.id, phone: data.phone, createdAt: FieldValue.serverTimestamp(),
   });
-  try {
-    await tel.call(data.phone, checkInCallText(lang, data.displayName), reportId);
-    await logEvent(ref, "call_user", { reportId });
-  } catch (e) {
-    // Voice is optional (e.g. VMS not enabled on the account); the SMS already went out.
-    logger.warn("check-in call failed", { uid: ref.id, ...describeError(e) });
-  }
+  await telephony().call(data.phone, checkInCallText(lang, data.displayName), reportId);
+  await logEvent(ref, "call_user", { reportId });
 }
 
 /** Facts about the person for alert messages. */
@@ -249,7 +257,7 @@ async function alertContacts(
   const sms = kind === "family"
     ? t(lang, "familySms", params)
     : t(lang, family.length > 0 ? "workSms" : "workSmsNoFamily", params);
-  const voice = t(lang, kind === "family" ? "familyVoice" : "workVoice", params);
+  const voice = t(lang, kind === "family" ? "familyVoice" : "workVoice", params); // used only if CALL_CONTACTS
   // Several contacts may share a number (useful when testing): one message per number.
   const phones = [...new Set(contacts.map((c) => c.phone))];
 
@@ -258,8 +266,9 @@ async function alertContacts(
     // The SMS carries the details, so once it is sent the contact counts as notified;
     // a failed follow-up call must not make the stage retry and resend the SMS.
     await tel.sms(phone, sms);
+    if (!CALL_CONTACTS[kind]) return phone;
     try {
-      await tel.call(phone, messageCallText(voice));
+      await tel.call(phone, messageCallText(lang, voice));
     } catch (e) {
       logger.warn("alarm call failed", { uid: ref.id, kind, ...describeError(e) });
     }
@@ -282,7 +291,7 @@ async function notifyPolice(ref: DocumentReference, data: DocumentData, tracking
   if (police.length === 0) return;
 
   const lang: Lang = asLang(data.language);
-  const text = messageCallText(t(lang, "policeVoice", alertParams(data, tracking, now, lang)));
+  const text = messageCallText(lang, t(lang, "policeVoice", alertParams(data, tracking, now, lang)));
   const tel = telephony();
   const results = await Promise.allSettled(police.map(async (contact) => {
     await tel.call(contact.phone, text);
@@ -302,6 +311,7 @@ async function runAction(
   switch (action) {
     case "push": return sendPush(ref, data);
     case "nudgeUser": return nudgeUser(ref, data, tracking);
+    case "callUser": return callUser(ref, data);
     case "escalate": return alertContacts(ref, data, tracking, now, "family");
     case "notifyWork": return alertContacts(ref, data, tracking, now, "work");
     case "notifyPolice": return notifyPolice(ref, data, tracking, now);
@@ -314,7 +324,7 @@ async function processUser(ref: DocumentReference, now: number): Promise<void> {
     const data = (await tx.get(ref)).data();
     if (!data) return null;
     const nextActionAt = toMillis(data.nextActionAt);
-    if (nextActionAt === null || nextActionAt > now) return null;
+    if (nextActionAt === null || nextActionAt > now + TICK_LOOKAHEAD) return null;
     const before = trackingOf(data);
     const decision = decide(before, settingsOf(data), now);
     tx.update(ref, { ...trackingFields(decision.tracking), nextActionAt: toTimestamp(decision.nextActionAt) });
@@ -343,6 +353,9 @@ async function processUser(ref: DocumentReference, now: number): Promise<void> {
       } else if (action === "nudgeUser") {
         // Not retried: the escalation timer is already running, so a failed SMS must not delay it.
         await logEvent(ref, "nudge_user_failed");
+      } else if (action === "callUser") {
+        // E.g. outside SMSAPI's 8:00–22:00 voice hours. Not retried: the family alarm stays on schedule.
+        await logEvent(ref, "call_user_failed");
       }
     }
   }
@@ -354,10 +367,10 @@ async function processUser(ref: DocumentReference, now: number): Promise<void> {
 export const tick = onSchedule(
   { schedule: "every 5 minutes", timeZone: "Etc/UTC", secrets: TELEPHONY_SECRETS, timeoutSeconds: 300 },
   async () => {
-    // Steps due a few milliseconds after this run would otherwise wait for the next one, 5 minutes later.
-    const now = Date.now() + TICK_LOOKAHEAD;
+    // Real time is recorded; steps due within TICK_LOOKAHEAD are picked up now rather than 5 minutes later.
+    const now = Date.now();
     const due = await db.collection("users")
-      .where("nextActionAt", "<=", Timestamp.fromMillis(now))
+      .where("nextActionAt", "<=", Timestamp.fromMillis(now + TICK_LOOKAHEAD))
       .orderBy("nextActionAt")
       .limit(500)
       .get();

@@ -15,10 +15,11 @@ Użytkownik ustawia:
 ```
 21:00              codzienne pytanie (push)
 23:00, 1:00, 3:00  3 przypomnienia co R (tu 2 godz.); w ciszy nocnej pomijane, wznawiane po jej końcu
-3:15               SMS do osoby: „Za 15 min powiadomimy bliskich” (3. przypomnienie + E)
-3:30               SMS do rodziny z adresem i uwagami (SMS do osoby + E)
-3:45               SMS do kontaktu z pracy, z imionami i numerami rodziny (SMS do rodziny + E)
-3:30–6:30          push co 30 min przez 3 godz. (także w nocy), potem cisza aż do potwierdzenia
+3:15               SMS do osoby: „Za 20 min powiadomimy bliskich” (3. przypomnienie + E)
+3:20               telefon do osoby: „naciśnij 1, jeśli wszystko w porządku” (SMS + 5 min)
+3:35               SMS (z adresem i uwagami) i telefon do rodziny (telefon do osoby + E)
+3:50               tylko SMS do kontaktu z pracy, z imionami i numerami rodziny (rodzina + E)
+3:35–6:35          push co 30 min przez 3 godz. (także w nocy), potem cisza aż do potwierdzenia
 potwierdzenie      SMS „wszystko w porządku” do wszystkich powiadomionych
 ```
 

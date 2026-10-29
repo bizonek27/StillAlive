@@ -20,9 +20,10 @@ i `values-pl/` (PL) — każdą zmianę tekstu wprowadzaj w obu.
 ```
 T (codzienne pytanie, np. 21:00)        push
 T+R, T+2R, T+3R                          3 przypomnienia co R (30 min–4 godz.), w ciszy nocnej pomijane
-3. przypomnienie + E                     SMS do osoby („za E powiadomimy bliskich”)
-SMS do osoby + E                         SMS do rodziny (max 2), z adresem i uwagami
-SMS do rodziny + E                       SMS do kontaktu z pracy (max 1, dostaje imiona i numery rodziny)
+3. przypomnienie + E                     SMS do osoby („za 5 min + E powiadomimy bliskich”)
+SMS do osoby + 5 min                     telefon do osoby („naciśnij 1” → potwierdzenie)
+telefon do osoby + E                     SMS + telefon do rodziny (max 2), SMS z adresem i uwagami
+SMS do rodziny + E                       tylko SMS do kontaktu z pracy (max 1, dostaje imiona i numery rodziny)
 od SMS-a do rodziny .. +3 godz.          push co 30 min, niezależnie od ustawień i ciszy nocnej
 potem                                    cisza aż do „Jestem OK”; wtedy SMS „wszystko w porządku” do powiadomionych
 ```
@@ -30,7 +31,11 @@ potem                                    cisza aż do „Jestem OK”; wtedy SMS
 - E = `escalateAfterMinutes` (5 min–48 godz., co 5 min). Do SMS-a do rodziny cisza nocna nie wlicza się do E;
   potem (praca, push-e po alarmie) liczy się zwykły zegar.
 - Policja: etap istnieje w backendzie (`notifyPolice`), ale w aplikacji jest ukryta „na razie”.
-- Połączenia VMS (SMSAPI) są dodatkiem: konto nie ma jeszcze uprawnienia VMS (błąd 110), SMS zawsze idzie pierwszy.
+- Połączenia VMS (SMSAPI): do osoby 5 min po SMS-ie (`callUser`, „naciśnij 1” → `smsapiCallback` potwierdza)
+  i do rodziny razem z SMS-em. Do pracy nie dzwonimy (`CALL_CONTACTS`). VMS działa tylko 8:00–22:00 — nieudany
+  telefon nie wstrzymuje kolejnych etapów.
+  Lektor: parametr `SMSAPI_LECTOR` (ewa/jacek/jan/maja) w `functions/.env.still-alive-3d962`, zmiana wymaga deployu.
+  Komunikat jest powtarzany po „Powtarzam.” — SMSAPI nie obsługuje znaczników pauzy.
 - SMS-y zaczynają się od „App StillAlive:” i są bez polskich znaków (`normalize`). Wszystkie mieszczą się w 160 znakach
   oprócz SMS-a do rodziny, który celowo zawiera pełny adres z uwagami (2–3 części).
 

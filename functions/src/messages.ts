@@ -5,6 +5,7 @@ const MESSAGES = {
     callPrompt:
       "Dzień dobry {name}. Tu aplikacja StillAlive. Nie potwierdziłeś, że wszystko u Ciebie w porządku. " +
       "Jeśli wszystko jest dobrze, naciśnij jeden albo otwórz aplikację StillAlive.",
+    callRepeat: "Powtarzam.",
     nudgeSms:
       "{prefix} Nie odpowiadasz na powiadomienia. Otwórz aplikację i naciśnij Jestem OK. Za {escalateIn} powiadomimy bliskich.",
     workSms:
@@ -42,6 +43,7 @@ const MESSAGES = {
     callPrompt:
       "Hello {name}. This is the StillAlive app. You have not confirmed that you are okay. " +
       "If everything is fine, press one or open the StillAlive app.",
+    callRepeat: "I repeat.",
     nudgeSms:
       "{prefix} You are not answering. Open the app and press I'm OK. We will notify your loved ones in {escalateIn}.",
     workSms:
