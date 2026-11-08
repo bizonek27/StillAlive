@@ -13,7 +13,7 @@ import {
   afterCountedTime, decide, nextCheckIn, nextDueAfterConfirmation,
 } from "./schedule";
 import {
-  DATABASE_ID, REGION, TELEPHONY_SECRETS, checkInCallText, messageCallText, newReportId, spokenPhone, telephony,
+  DATABASE_ID, REGION, TELEPHONY_SECRETS, VOICE_CALLS_ENABLED, checkInCallText, messageCallText, newReportId, spokenPhone, telephony,
 } from "./telephony";
 import { Contact, formatAddress, validateProfile } from "./validation";
 import { recordContactAdditions } from "./limits";
@@ -29,7 +29,7 @@ const TICK_LOOKAHEAD = TICK_TOLERANCE;
  * Whether a new contact number (also an edited one) gets an SMS saying it was added as an emergency contact.
  * Off for now at the owner's request; consider turning it back on before release (consent / GDPR).
  */
-const NOTIFY_NEW_CONTACTS = false;
+const NOTIFY_NEW_CONTACTS = true;
 
 /** Whether an alarm also phones the contact (VMS) after the SMS. Work gets the SMS only. */
 const CALL_CONTACTS = { family: true, work: false } as const;
@@ -202,6 +202,10 @@ async function nudgeUser(ref: DocumentReference, data: DocumentData, tracking: T
 
 /** Phone call to the person: "press 1 if you are okay" (confirmed through smsapiCallback). */
 async function callUser(ref: DocumentReference, data: DocumentData): Promise<void> {
+  if (!VOICE_CALLS_ENABLED) {
+    await logEvent(ref, "call_user_skipped");
+    return;
+  }
   const lang = asLang(data.language);
   const reportId = newReportId();
   // Stored before calling so the report can never arrive for an unknown id.
@@ -266,7 +270,7 @@ async function alertContacts(
     // The SMS carries the details, so once it is sent the contact counts as notified;
     // a failed follow-up call must not make the stage retry and resend the SMS.
     await tel.sms(phone, sms);
-    if (!CALL_CONTACTS[kind]) return phone;
+    if (!VOICE_CALLS_ENABLED || !CALL_CONTACTS[kind]) return phone;
     try {
       await tel.call(phone, messageCallText(lang, voice));
     } catch (e) {
@@ -288,7 +292,8 @@ async function alertContacts(
 /** Second alarm, policeAfterHours after the family: voice call to the police contact. */
 async function notifyPolice(ref: DocumentReference, data: DocumentData, tracking: Tracking, now: number): Promise<void> {
   const police = contactsOf(data, "police");
-  if (police.length === 0) return;
+  // Police is only reachable by voice call; nothing to do while calls are off.
+  if (police.length === 0 || !VOICE_CALLS_ENABLED) return;
 
   const lang: Lang = asLang(data.language);
   const text = messageCallText(lang, t(lang, "policeVoice", alertParams(data, tracking, now, lang)));

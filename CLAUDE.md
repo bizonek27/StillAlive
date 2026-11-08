@@ -31,6 +31,8 @@ potem                                    cisza aż do „Jestem OK”; wtedy SMS
 - E = `escalateAfterMinutes` (5 min–48 godz., co 5 min). Do SMS-a do rodziny cisza nocna nie wlicza się do E;
   potem (praca, push-e po alarmie) liczy się zwykły zegar.
 - Policja: etap istnieje w backendzie (`notifyPolice`), ale w aplikacji jest ukryta „na razie”.
+- **Połączenia głosowe są obecnie wyłączone** (`VOICE_CALLS_ENABLED = false` w `telephony.ts`, za drogie na czas testów):
+  idą tylko SMS-y, a harmonogram (w tym 5 min po SMS-ie do osoby) się nie zmienia. Gdy są włączone:
 - Połączenia VMS (SMSAPI): do osoby 5 min po SMS-ie (`callUser`, „naciśnij 1” → `smsapiCallback` potwierdza)
   i do rodziny razem z SMS-em. Do pracy nie dzwonimy (`CALL_CONTACTS`). VMS działa tylko 8:00–22:00 — nieudany
   telefon nie wstrzymuje kolejnych etapów.
@@ -43,14 +45,14 @@ Logika jest czysta i testowana w `functions/src/schedule.ts` (`decide()`); efekt
 
 ## Komendy
 
-Na tej maszynie systemowa Java to 25 (Gradle 8.11 jej nie obsługuje) i nie ma globalnego Node:
+Na tej maszynie systemowa Java to 25 (Gradle 8.11 jej nie obsługuje). Node 24 i npm są zainstalowane w systemie:
 
 ```bash
-# Android (JDK 21 w ~/.jdks, SDK w ~/Android/Sdk wskazany w android/local.properties)
+# Android (JDK 21 w ~/.jdks, SDK w ./Android/Sdk w katalogu projektu — ignorowany przez git, wskazany w android/local.properties)
 cd android && JAVA_HOME=~/.jdks/jdk-21 ./gradlew assembleDebug testDebugUnitTest lintDebug
-~/Android/Sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk
+../Android/Sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-# Functions (Node tymczasowo w /tmp/stillalive-node; po restarcie trzeba pobrać ponownie)
+# Functions
 cd functions && npm test
 
 # Wdrożenie robi właściciel: firebase deploy --only functions[,firestore]
@@ -64,6 +66,8 @@ Nie buduj aplikacji, gdy właściciel zapowiada kolejne zmiany. Nie wdrażaj i n
 - `ALLOW_DUPLICATE_CONTACT_PHONES = true` — w `functions/src/validation.ts` i `Models.kt` (ułatwia testy jednym numerem).
 - `NOTIFY_NEW_CONTACTS = false` w `functions/src/index.ts` — SMS „dodano Cię jako kontakt” wyłączony na prośbę właściciela;
   przed publikacją rozważyć ponowne włączenie (zgoda kontaktów, RODO).
+- `VOICE_CALLS_ENABLED = false` w `functions/src/telephony.ts` — dzwonienie wyłączone; teksty w ustawieniach aplikacji
+  (`settings_escalation_summary`) nie wspominają o telefonie — po włączeniu je zaktualizować.
 - `ENFORCE_APP_CHECK = false` w `functions/src/index.ts` — włączyć po rejestracji aplikacji w App Check
   (Play Integrity + token debug w konsoli Firebase).
 - Publikacja w Google Play: targetSdk 36 (wymaga aktualizacji AGP/bibliotek), podpis release, polityka prywatności,

@@ -19,6 +19,12 @@ export const smsapiTestMode = defineString("SMSAPI_TEST_MODE", {
   description: "\"true\" validates requests with SMSAPI without sending anything or charging",
 });
 
+/**
+ * Voice calls (VMS) on or off. Off for now: too expensive during testing. When off, call() does nothing,
+ * so no code path can place a call; the schedule itself is unchanged.
+ */
+export const VOICE_CALLS_ENABLED = false;
+
 /** Every function that sends SMS or makes calls must declare these. */
 export const TELEPHONY_SECRETS = [smsapiToken];
 
@@ -83,6 +89,7 @@ export function telephony(): Telephony {
       });
     },
     async call(to, text, reportId) {
+      if (!VOICE_CALLS_ENABLED) return;
       await post("vms.do", {
         to: toSmsapiNumber(to),
         tts: text.replaceAll("StillAlive", SPOKEN_APP_NAME),

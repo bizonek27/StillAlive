@@ -86,7 +86,7 @@
     <string name="settings_escalation">If you do not respond</string>
     <string name="settings_escalate_after">Delay between alarm stages</string>
     <string name="hours_value">%1$d h</string>
-    <string name="settings_escalation_summary">If you do not answer, we will remind you %1$d times every %2$s. %3$s after the last reminder we will text you, and call you 5 min later. After another %3$s we will notify your family (text and call), and after another %3$s your work contact (text).</string>
+    <string name="settings_escalation_summary">If you do not answer, we will remind you %1$d times every %2$s. %3$s after the last reminder we will text you. If you still do not answer, after another 5 min and %3$s we will notify your family, and after another %3$s your work contact.</string>
     <string name="settings_add_family">Add family contact</string>
     <string name="contact_edit">Edit contact</string>
     <string name="settings_add_work">Add a work contact</string>
